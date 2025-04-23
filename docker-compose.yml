@@ -1,0 +1,128 @@
+version: '3.8'
+services:
+
+  employee-service:
+    build: ./services/employee-service
+    ports:
+      - "8082:8082"
+#    depends_on:
+#      - gateway
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  approval-service:
+    build: ./services/approval-service
+    ports:
+      - "8083:8083"
+#    depends_on:
+#      - gateway
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+#  service-a:
+#    build: ./services/service-a
+#    ports:
+#      - "5001:5000"
+#  service-b:
+#    build: ./services/service-b
+#    ports:
+#      - "5002:5000"
+#  gateway:
+#    build: ./gateway
+#    ports:
+#      - "8080:8000"
+  notification-service:
+    build: ./services/notification_service
+    ports:
+      - "8005:8005"
+    environment:
+      - PORT=8005
+      - NODE_ENV=development
+      - POSTGRES_DB=notification_service
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - APP_SECRET=tkb!afj.tch6AUF8tut
+      - EXCHANGE_NAME=LEAVE_EXCHANGE
+      - MSG_QUEUE_URL=amqp://rabbitmq
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  # Database và message broker được chia sẻ
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=notification_service
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  leave-service:
+    build: ./services/leave-service
+    container_name: leave-service
+    depends_on:
+      - leave-service-mysql
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  leave-requests-service:
+    build: ./services/leave-requests-service
+    container_name: leave-requests-service
+    depends_on:
+      - leave-requests-service-mysql
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+
+  leave-service-mysql:
+    image: mysql:8
+    container_name: leave-service-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: leave_service_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - leave-service-mysql-data:/var/lib/mysql
+
+  leave-requests-service-mysql:
+    image: mysql:8
+    container_name:   leave-requests-service-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: leave_request_service_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - leave-requests-service-mysql-data:/var/lib/mysql
+
+
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  leave-service-mysql-data:
+  leave-requests-service-mysql-data:
+  

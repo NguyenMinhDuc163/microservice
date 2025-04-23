@@ -1,0 +1,57 @@
+# Dependency directories
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment files
+.env
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Source control
+.git
+.gitignore
+
+# Build outputs
+dist/
+build/
+out/
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+
+# Dependency lock files
+package-lock.json
+yarn.lock
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+*.test.js
+*.spec.js
+
+# Documentation
+README.md
+CHANGELOG.md
+
+# Temporary files
+tmp/
+temp/
+
+# Project-specific ignores
+*.md
+*.txt
+```
