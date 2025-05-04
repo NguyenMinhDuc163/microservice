@@ -17,7 +17,7 @@ const StartServer = async() => {
 
         // Listen for connections
         const server = app.listen(PORT, () => {
-            console.log(`Notification service running on port ${PORT}`);
+            console.log(`Manager service running on port ${PORT}`);
         });
 
         // Handle graceful shutdown
@@ -46,7 +46,7 @@ const StartServer = async() => {
             await expressApp(app);
 
             const server = app.listen(PORT, () => {
-                console.log(`Notification service running with limited functionality on port ${PORT}`);
+                console.log(`Manager service running with limited functionality on port ${PORT}`);
             });
         } catch (serverError) {
             console.error('Failed to start server:', serverError);
@@ -55,4 +55,5 @@ const StartServer = async() => {
     }
 };
 
-StartServer().then(r =>  console.log('Server started successfully'));
+StartServer().then(r =>
+console.log('Server started successfully'));

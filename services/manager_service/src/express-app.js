@@ -3,10 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const { notification, appEvents, manager} = require('./api');
+const { manager, appEvents } = require('./api');
 // const { CreateChannel } = require('./utils'); // Tạm thời vô hiệu hóa
 const ErrorHandler = require('./utils/error-handler');
-const { ManagerRepository } = require('../src/database/repository/manager-repository');
 
 module.exports = async (app) => {
     // Middleware
@@ -26,8 +25,7 @@ module.exports = async (app) => {
     console.log('Starting in development mode without RabbitMQ');
 
     // Setup routes
-    // notification(app, null);
-    manager(app, null)// Truyền null thay vì channel
+    manager(app, null); // Truyền null thay vì channel
     appEvents(app);
 
     // API Documentation route

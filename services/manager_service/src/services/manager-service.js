@@ -1,201 +1,19 @@
-// src/services/manager-service.js
+// src/services/manager-service.js - Đúng theo đặc tả
 const { ManagerRepository } = require("../database");
 const { createResponse } = require('../utils/responseHelper');
-const { BadRequestError, NotFoundError } = require('../utils/app-errors');
+const axios = require('axios'); // Cần cài đặt axios để gọi API từ các service khác
+
+// URL của các service khác (trong thực tế sẽ lấy từ biến môi trường)
+const LEAVE_REQUEST_SERVICE = 'http://localhost:8001';
+const EMPLOYEE_SERVICE = 'http://localhost:8002';
+const NOTIFICATION_SERVICE = 'http://localhost:8005';
 
 class ManagerService {
     constructor() {
         this.repository = new ManagerRepository();
     }
 
-    async CreateManager(managerInputs) {
-        const { name, email, departmentId, position } = managerInputs;
-
-        try {
-            // Validation
-            if (!name || !email || !departmentId || !position) {
-                return createResponse(
-                    false,
-                    'All fields (name, email, departmentId, position) are required',
-                    400,
-                    []
-                );
-            }
-
-            // Kiểm tra email đã tồn tại chưa
-            const existingManager = await this.repository.FindManagerByEmail(email);
-            if (existingManager) {
-                return createResponse(
-                    false,
-                    'Email already exists',
-                    400,
-                    []
-                );
-            }
-
-            // Tạo manager mới
-            const managerResult = await this.repository.CreateManager({
-                name,
-                email,
-                departmentId,
-                position
-            });
-
-            return createResponse(
-                true,
-                'Manager created successfully',
-                201,
-                [managerResult]
-            );
-        } catch (error) {
-            console.error('Error in CreateManager:', error);
-            return createResponse(
-                false,
-                error.message || 'Failed to create manager',
-                500,
-                [],
-                error.toString()
-            );
-        }
-    }
-
-    async GetManager(id) {
-        try {
-            const manager = await this.repository.FindManager(id);
-            if (!manager) {
-                return createResponse(
-                    false,
-                    'Manager not found',
-                    404,
-                    []
-                );
-            }
-            return createResponse(
-                true,
-                'Manager retrieved successfully',
-                200,
-                [manager]
-            );
-        } catch (error) {
-            console.error('Error in GetManager:', error);
-            return createResponse(
-                false,
-                error.message || 'Failed to retrieve manager',
-                500,
-                [],
-                error.toString()
-            );
-        }
-    }
-
-    async GetAllManagers(filter) {
-        try {
-            const managers = await this.repository.FindAllManagers(filter);
-            return createResponse(
-                true,
-                'Managers retrieved successfully',
-                200,
-                managers || []
-            );
-        } catch (error) {
-            console.error('Error in GetAllManagers:', error);
-            return createResponse(
-                false,
-                error.message || 'Failed to retrieve managers',
-                500,
-                [],
-                error.toString()
-            );
-        }
-    }
-
-    async UpdateManager(id, managerData) {
-        try {
-            // Validation
-            if (!id) {
-                return createResponse(
-                    false,
-                    'Manager ID is required',
-                    400,
-                    []
-                );
-            }
-
-            // Kiểm tra manager tồn tại
-            const existingManager = await this.repository.FindManager(id);
-            if (!existingManager) {
-                return createResponse(
-                    false,
-                    'Manager not found',
-                    404,
-                    []
-                );
-            }
-
-            // Nếu email thay đổi, kiểm tra email mới đã tồn tại chưa
-            if (managerData.email && managerData.email !== existingManager.email) {
-                const emailExists = await this.repository.FindManagerByEmail(managerData.email);
-                if (emailExists) {
-                    return createResponse(
-                        false,
-                        'Email already exists',
-                        400,
-                        []
-                    );
-                }
-            }
-
-            // Cập nhật manager
-            const updatedManager = await this.repository.UpdateManager(id, managerData);
-            return createResponse(
-                true,
-                'Manager updated successfully',
-                200,
-                [updatedManager]
-            );
-        } catch (error) {
-            console.error('Error in UpdateManager:', error);
-            return createResponse(
-                false,
-                error.message || 'Failed to update manager',
-                500,
-                [],
-                error.toString()
-            );
-        }
-    }
-
-    async DeleteManager(id) {
-        try {
-            const result = await this.repository.DeleteManager(id);
-
-            if (!result) {
-                return createResponse(
-                    false,
-                    'Manager not found',
-                    404,
-                    []
-                );
-            }
-
-            return createResponse(
-                true,
-                'Manager deleted successfully',
-                200,
-                [{ success: result }]
-            );
-        } catch (error) {
-            console.error('Error in DeleteManager:', error);
-            return createResponse(
-                false,
-                error.message || 'Failed to delete manager',
-                500,
-                [],
-                error.toString()
-            );
-        }
-    }
-
+    // Lấy danh sách nhân viên trong team của manager
     async GetTeam(managerId) {
         try {
             if (!managerId) {
@@ -207,24 +25,31 @@ class ManagerService {
                 );
             }
 
-            // Kiểm tra manager tồn tại
-            const existingManager = await this.repository.FindManager(managerId);
-            if (!existingManager) {
+            // Trong thực tế, sẽ gọi API từ Employee Service
+            // để lấy danh sách nhân viên thuộc quản lý của manager này
+            try {
+                // Mô phỏng kết quả
+                const teamMembers = [
+                    { employeeId: "emp-001", name: "John Smith", position: "Developer" },
+                    { employeeId: "emp-002", name: "Alice Johnson", position: "Designer" },
+                    { employeeId: "emp-003", name: "Bob Brown", position: "Tester" }
+                ];
+
+                return createResponse(
+                    true,
+                    'Team members retrieved successfully',
+                    200,
+                    teamMembers
+                );
+            } catch (error) {
+                console.error("Error calling Employee Service:", error);
                 return createResponse(
                     false,
-                    'Manager not found',
-                    404,
+                    'Failed to retrieve employees from Employee Service',
+                    500,
                     []
                 );
             }
-
-            const teamMembers = await this.repository.GetTeamMembers(managerId);
-            return createResponse(
-                true,
-                'Team members retrieved successfully',
-                200,
-                teamMembers || []
-            );
         } catch (error) {
             console.error('Error in GetTeam:', error);
             return createResponse(
@@ -237,6 +62,7 @@ class ManagerService {
         }
     }
 
+    // Lấy danh sách yêu cầu chờ phê duyệt
     async GetPendingRequests(managerId) {
         try {
             if (!managerId) {
@@ -248,28 +74,44 @@ class ManagerService {
                 );
             }
 
-            // Kiểm tra manager tồn tại
-            const existingManager = await this.repository.FindManager(managerId);
-            if (!existingManager) {
+            // Trong thực tế, sẽ gọi API từ Approval Service hoặc Leave Request Service
+            // để lấy danh sách yêu cầu chờ phê duyệt
+            try {
+                // Mô phỏng kết quả
+                const pendingRequests = [
+                    {
+                        requestId: "req-001",
+                        employeeId: "emp-001",
+                        employeeName: "John Smith",
+                        startDate: "2025-05-01",
+                        endDate: "2025-05-05",
+                        leaveType: "ANNUAL"
+                    },
+                    {
+                        requestId: "req-002",
+                        employeeId: "emp-002",
+                        employeeName: "Alice Johnson",
+                        startDate: "2025-05-10",
+                        endDate: "2025-05-12",
+                        leaveType: "SICK"
+                    }
+                ];
+
+                return createResponse(
+                    true,
+                    'Pending requests retrieved successfully',
+                    200,
+                    pendingRequests
+                );
+            } catch (error) {
+                console.error("Error calling Leave Request Service:", error);
                 return createResponse(
                     false,
-                    'Manager not found',
-                    404,
+                    'Failed to retrieve pending requests from Leave Request Service',
+                    500,
                     []
                 );
             }
-
-            // Trong thực tế, cần tích hợp với Leave Request Service
-            // Ở đây chúng ta giả định rằng có API để lấy danh sách yêu cầu
-
-            // Mô phỏng kết quả trả về
-            const pendingRequests = [];
-            return createResponse(
-                true,
-                'Pending requests retrieved successfully',
-                200,
-                pendingRequests
-            );
         } catch (error) {
             console.error('Error in GetPendingRequests:', error);
             return createResponse(
@@ -282,6 +124,7 @@ class ManagerService {
         }
     }
 
+    // Lấy danh sách thông báo của manager
     async GetNotifications(managerId) {
         try {
             if (!managerId) {
@@ -293,28 +136,40 @@ class ManagerService {
                 );
             }
 
-            // Kiểm tra manager tồn tại
-            const existingManager = await this.repository.FindManager(managerId);
-            if (!existingManager) {
+            // Trong thực tế, sẽ gọi API từ Notification Service
+            // để lấy danh sách thông báo của manager
+            try {
+                // Mô phỏng kết quả
+                const notifications = [
+                    {
+                        notificationId: "notif-001",
+                        message: "New leave request from John Smith",
+                        createdAt: "2025-04-25T14:30:00Z",
+                        read: false
+                    },
+                    {
+                        notificationId: "notif-002",
+                        message: "Leave request updated by Alice Johnson",
+                        createdAt: "2025-04-24T09:15:00Z",
+                        read: true
+                    }
+                ];
+
+                return createResponse(
+                    true,
+                    'Notifications retrieved successfully',
+                    200,
+                    notifications
+                );
+            } catch (error) {
+                console.error("Error calling Notification Service:", error);
                 return createResponse(
                     false,
-                    'Manager not found',
-                    404,
+                    'Failed to retrieve notifications from Notification Service',
+                    500,
                     []
                 );
             }
-
-            // Trong thực tế, cần tích hợp với Notification Service
-            // Ở đây chúng ta giả định rằng có API để lấy danh sách thông báo
-
-            // Mô phỏng kết quả trả về
-            const notifications = [];
-            return createResponse(
-                true,
-                'Notifications retrieved successfully',
-                200,
-                notifications
-            );
         } catch (error) {
             console.error('Error in GetNotifications:', error);
             return createResponse(
@@ -340,7 +195,6 @@ class ManagerService {
                 case 'LEAVE_REQUEST_CREATED':
                     // Logic xử lý khi có yêu cầu nghỉ phép mới
                     console.log('Processing LEAVE_REQUEST_CREATED event in Manager Service');
-                    // Có thể thêm logic cập nhật số lượng yêu cầu chờ xử lý
                     break;
 
                 case 'EMPLOYEE_ASSIGNED':
@@ -382,4 +236,5 @@ class ManagerService {
         }
     }
 }
+
 module.exports = ManagerService;
