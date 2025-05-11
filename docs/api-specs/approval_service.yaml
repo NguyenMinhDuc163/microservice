@@ -1,0 +1,313 @@
+openapi: 3.0.0
+info:
+  title: Approval Service API
+  description: |
+    API cho Approval Service trong hệ thống phê duyệt nghỉ phép, xây dựng bằng Java Spring Boot.
+    Dịch vụ này quản lý các phê duyệt yêu cầu nghỉ phép, bao gồm lấy thông tin phê duyệt, tạo phê duyệt, phê duyệt hoặc từ chối yêu cầu.
+  version: 1.0.0
+  contact:
+    name: Development Team
+    email: dev@example.com
+
+servers:
+  - url: http://localhost:8083
+    description: Development Server
+
+tags:
+  - name: Approval
+    description: Các API liên quan đến phê duyệt
+
+paths:
+  /api/approvals/approve:
+    put:
+      summary: Lưu thông tin của một phê duyệt được yêu cầu
+      description: Lưu thông tin của một phê duyệt được yêu cầu
+      tags:
+        - Approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                leaveRequestId:
+                  type: integer
+                  format: int32
+                  example: 100
+                  description: ID yêu cầu nghỉ phép
+                managerId:
+                  type: integer
+                  format: int32
+                  example: 2
+                  description: ID quản lý
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Approval approved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        approvalId:
+                          type: integer
+                          format: int32
+                          example: 1
+                          description: ID của phê duyệt
+                        approvalAt:
+                          type: string
+                          format: date-time
+                          example: "2025-05-10T10:00:00Z"
+                          description: Ngày từ chối phê duyệt
+                        comments:
+                          type: string
+                          example: "Từ chối yêu cầu"
+                          description: Ghi chú
+                        managerId:
+                          type: integer
+                          format: int32
+                          example: 2
+                          description: ID quản lý phê duyệt
+                        leaveRequestId:
+                          type: integer
+                          format: int32
+                          example: 100
+                          description: ID yêu cầu nghỉ phép
+        '400':
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 400
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Bad Request
+        '404':
+          description: Không tìm thấy phê duyệt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 404
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Approval not found
+        '500':
+          description: Lỗi máy chủ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal server error
+
+  /api/approvals/reject:
+    put:
+      summary: Từ chối một yêu cầu
+      description: Cập nhật trạng thái phê duyệt cho một yêu cầu
+      tags:
+        - Approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                leaveRequestId:
+                  type: integer
+                  format: int32
+                  example: 100
+                  description: ID yêu cầu nghỉ phép
+                managerId:
+                  type: integer
+                  format: int32
+                  example: 2
+                  description: ID quản lý
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Approval rejected successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        approvalId:
+                          type: integer
+                          format: int32
+                          example: 1
+                          description: ID của phê duyệt
+                        rejectAt:
+                          type: string
+                          format: date-time
+                          example: "2025-05-10T10:00:00Z"
+                          description: Ngày từ chối phê duệt
+                        comments:
+                          type: string
+                          example: "Từ chối yêu cầu"
+                          description: Ghi chú
+                        managerId:
+                          type: integer
+                          format: int32
+                          example: 2
+                          description: ID quản lý phê duyệt
+                        leaveRequestId:
+                          type: integer
+                          format: int32
+                          example: 100
+                          description: ID yêu cầu nghỉ phép
+        '400':
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 400
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Bad Request
+        '404':
+          description: Không tìm thấy phê duyệt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 404
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Approval not found
+        '500':
+          description: Lỗi máy chủ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal server error
+
+components:
+  schemas:
+    Approval:
+      type: object
+      properties:
+        approvalId:
+          type: integer
+          format: int32
+          example: 1
+          description: ID của phê duyệt
+        approvalDate:
+          type: string
+          format: date-time
+          example: "2025-05-10T10:00:00Z"
+          description: Ngày phê duyệt
+        comments:
+          type: string
+          example: "Cần kiểm tra thêm"
+          description: Ghi chú
+        managerId:
+          type: integer
+          format: int32
+          example: 2
+          description: ID quản lý phê duyệt
+        senderId:
+          type: integer
+          format: int32
+          example: 3
+          description: ID người gửi yêu cầu
+        leaveRequestId:
+          type: integer
+          format: int32
+          example: 100
+          description: ID yêu cầu nghỉ phép
+
+    BaseRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+          description: ID của phê duyệt
+        leaveRequestId:
+          type: integer
+          format: int32
+          example: 100
+          description: ID yêu cầu nghỉ phép
+        managerId:
+          type: integer
+          format: int32
+          example: 2
+          description: ID quản lý
+        comments:
+          type: string
+          example: "Đã phê duyệt"
+          description: Ghi chú

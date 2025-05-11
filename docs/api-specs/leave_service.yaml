@@ -1,0 +1,164 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8091
+  description: Generated server url
+paths:
+  /api/leave-balances/{employeeId}/update:
+    put:
+      tags:
+      - leave-balance-controller
+      operationId: updateLeaveBalance
+      parameters:
+      - name: employeeId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: object
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/leave-validations:
+    post:
+      tags:
+      - leave-validation-controller
+      operationId: validateLeaveRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveValidationRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/leave-history/api/leave-history/employees/{id}:
+    post:
+      tags:
+      - leave-history-controller
+      operationId: addLeaveHistory
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: object
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/leave-service/hello:
+    get:
+      tags:
+      - hello-controller
+      operationId: hello
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /api/leave-policies:
+    get:
+      tags:
+      - leave-policy-controller
+      operationId: getAllPolicies
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/leave-history/employees/{id}:
+    get:
+      tags:
+      - leave-history-controller
+      operationId: getEmployeeLeaveHistory
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/leave-balances/{employeeId}:
+    get:
+      tags:
+      - leave-balance-controller
+      operationId: getLeaveBalance
+      parameters:
+      - name: employeeId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+components:
+  schemas:
+    LeaveValidationRequest:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+          format: int64
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        leaveType:
+          type: string
+          enum:
+          - ANNUAL
+          - SICK
+          - PERSONAL
+        employeeType:
+          type: string

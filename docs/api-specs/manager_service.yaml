@@ -1,0 +1,338 @@
+openapi: 3.0.0
+info:
+  title: Manager Service API
+  description: |
+    API cho Manager Service trong hệ thống phê duyệt nghỉ phép.
+    Dịch vụ này quản lý thông tin của quản lý, bao gồm việc nhận thông báo phê duyệt yêu cầu nghỉ phép.
+  version: 1.0.0
+  contact:
+    name: Development Team
+    email: dev@example.com
+
+servers:
+  - url: http://localhost:8003
+    description: Development Server
+
+tags:
+  - name: Manager
+    description: Các API liên quan đến quản lý
+
+paths:
+  /api/managers/{id}/team:
+    get:
+      summary: Lấy danh sách nhân viên trong team
+      description: Trả về danh sách nhân viên thuộc quyền quản lý của manager
+      tags:
+        - Manager
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của manager
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Team members retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TeamMember'
+        '400':
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tìm thấy manager
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Lỗi máy chủ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+
+  /api/managers/{id}/pending-requests:
+    get:
+      summary: Lấy danh sách yêu cầu chờ phê duyệt
+      description: Trả về danh sách các yêu cầu nghỉ phép đang chờ manager phê duyệt
+      tags:
+        - Manager
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của manager
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Pending requests retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PendingRequest'
+        '400':
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tìm thấy manager
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Lỗi máy chủ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+
+  /api/managers/{id}/notifications:
+    get:
+      summary: Lấy danh sách thông báo của quản lý
+      description: Trả về danh sách các thông báo dành cho manager
+      tags:
+        - Manager
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của manager
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Notifications retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+        '400':
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Không tìm thấy manager
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Lỗi máy chủ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+
+  /whoami:
+    get:
+      summary: Kiểm tra trạng thái dịch vụ
+      description: Trả về thông tin về dịch vụ để kiểm tra trạng thái
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Service information
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        msg:
+                          type: string
+                          example: "/manager : I am Manager Service"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Manager:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        departmentId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        position:
+          type: string
+          example: "Senior Manager"
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+          example: "ACTIVE"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TeamMember:
+      type: object
+      properties:
+        employeeId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        name:
+          type: string
+          example: "Jane Smith"
+        position:
+          type: string
+          example: "Developer"
+
+    PendingRequest:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        employeeId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        employeeName:
+          type: string
+          example: "Jane Smith"
+        startDate:
+          type: string
+          format: date
+          example: "2025-05-01"
+        endDate:
+          type: string
+          format: date
+          example: "2025-05-05"
+        leaveType:
+          type: string
+          enum: [SICK, ANNUAL, PERSONAL]
+          example: "ANNUAL"
+
+    Notification:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        message:
+          type: string
+          example: "New leave request from Jane Smith"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-04-25T14:30:00Z"
+        read:
+          type: boolean
+          example: false
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 400
+        status:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Bad Request"
+        data:
+          type: array
+          items: {}
+          example: []
+        error:
+          type: string
+          example: "Invalid input parameters"

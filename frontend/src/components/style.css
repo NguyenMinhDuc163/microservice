@@ -1,0 +1,31 @@
+/* style.css */
+
+.data-container {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+}
+
+.data-box {
+    flex: 1;
+    padding: 16px;
+    background-color: #f4f4f4;
+    border-radius: 4px;
+    min-width: 300px;
+    /* Đặt chiều rộng tối thiểu */
+    height: 200px;
+    /* Đặt chiều cao cố định */
+    overflow-y: auto;
+    /* Nếu dữ liệu quá dài, sẽ có thanh cuộn */
+    display: flex;
+    flex-direction: column;
+}
+
+.data-box h4 {
+    margin: 0 0 8px 0;
+}
+
+.data-box pre {
+    margin: 0;
+    overflow-x: auto;
+}

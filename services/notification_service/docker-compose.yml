@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8005:8005"
+    environment:
+      - PORT=8005
+      - NODE_ENV=development
+      - POSTGRES_DB=notification_service
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Admin@123
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - APP_SECRET=tkb!afj.tch6AUF8tut
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_GROUP_ID=leave-request-group
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - notification-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: notification-postgres
+    environment:
+      - POSTGRES_PASSWORD=Admin@123
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=notification_service
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - notification-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: notification-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - notification-network
+    healthcheck:
+      test: ["CMD-SHELL", "echo srvr | nc localhost 2181 || exit 1"]
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: notification-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - notification-network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
+    restart: unless-stopped
+
+  test-producer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: test-producer
+    command: node src/test/producer.js
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - notification-network
+    restart: "no"
+
+networks:
+  notification-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local

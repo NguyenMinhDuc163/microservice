@@ -1,0 +1,259 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8090
+  description: Generated server url
+tags:
+- name: LeaveRequest API
+  description: Quản lý các yêu cầu nghỉ phép
+paths:
+  /api/leave-requests/{id}:
+    get:
+      tags:
+      - LeaveRequest API
+      summary: Lấy yêu cầu nghỉ phép theo ID
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "404":
+          description: Không tìm thấy
+        "200":
+          description: Lấy thành công
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LeaveRequest"
+    put:
+      tags:
+      - LeaveRequest API
+      summary: Cập nhật thông tin yêu cầu nghỉ phép
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        description: ID của yêu cầu nghỉ phép
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLeaveRequestRequestDTO"
+        required: true
+      responses:
+        "200":
+          description: Cập nhật thành công
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LeaveRequest"
+        "404":
+          description: Không tìm thấy yêu cầu
+    delete:
+      tags:
+      - LeaveRequest API
+      summary: Xoá yêu cầu nghỉ phép
+      operationId: delete
+      parameters:
+      - name: id
+        in: path
+        description: ID của yêu cầu nghỉ phép
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "404":
+          description: Không tìm thấy yêu cầu
+        "204":
+          description: Xoá thành công
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/leave-requests/{id}/status:
+    put:
+      tags:
+      - LeaveRequest API
+      summary: Cập nhật trạng thái của yêu cầu nghỉ phép
+      operationId: updateStatus
+      parameters:
+      - name: id
+        in: path
+        description: ID của yêu cầu nghỉ phép
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatusUpdate"
+        required: true
+      responses:
+        "200":
+          description: Cập nhật trạng thái thành công
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LeaveRequest"
+  /api/leave-requests:
+    get:
+      tags:
+      - LeaveRequest API
+      summary: Tìm kiếm các yêu cầu nghỉ phép theo mã nhân viên và trạng thái
+      operationId: search
+      parameters:
+      - name: employeeId
+        in: query
+        description: Mã nhân viên
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: status
+        in: query
+        description: Trạng thái của yêu cầu
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Tìm kiếm thành công
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LeaveRequest"
+    post:
+      tags:
+      - LeaveRequest API
+      summary: Tạo yêu cầu nghỉ phép mới
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveRequestDTO"
+        required: true
+      responses:
+        "200":
+          description: Tạo yêu cầu thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequest"
+        "400":
+          description: Yêu cầu không hợp lệ
+  /api/leave-request-service/hello:
+    get:
+      tags:
+      - hello-controller
+      operationId: hello
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+components:
+  schemas:
+    UpdateLeaveRequestRequestDTO:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        leaveType:
+          type: string
+          enum:
+          - SICK
+          - ANNUAL
+          - PERSONAL
+        reason:
+          type: string
+    LeaveRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        employeeId:
+          type: integer
+          format: int64
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        leaveType:
+          type: string
+          enum:
+          - SICK
+          - ANNUAL
+          - PERSONAL
+        reason:
+          type: string
+        requestDate:
+          type: string
+          format: date
+        numberOfDays:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - PENDING
+          - APPROVED
+          - REJECTED
+        approvalId:
+          type: string
+        comments:
+          type: string
+    StatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Trạng thái mới của yêu cầu
+          example: APPROVED
+        comments:
+          type: string
+          description: Ghi chú khi cập nhật
+          example: Đã xét duyệt
+    LeaveRequestDTO:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+          format: int64
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        leaveType:
+          type: string
+          enum:
+          - SICK
+          - ANNUAL
+          - PERSONAL
+        reason:
+          type: string

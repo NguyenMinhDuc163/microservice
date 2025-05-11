@@ -1,0 +1,371 @@
+openapi: 3.0.0
+info:
+  title: Employee Service API
+  description: |
+    API cho Employee Service trong hệ thống quản lý nhân viên, xây dựng bằng Java Spring Boot.
+    Dịch vụ này quản lý thông tin nhân viên, bao gồm việc lấy thông tin nhân viên và thông tin quản lý của họ.
+  version: 1.0.0
+  contact:
+    name: Development Team
+    email: dev@example.com
+
+servers:
+  - url: http://localhost:8082
+    description: Development Server
+
+tags:
+  - name: Employee
+    description: Các API liên quan đến nhân viên
+
+paths:
+  /api/employees/{id}/manager:
+    get:
+      summary: Lấy thông tin quản lý của nhân viên
+      description: Trả về thông tin quản lý của nhân viên dựa trên ID nhân viên
+      tags:
+        - Employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của nhân viên
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Manager retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                          example: 1
+                          description: ID của quan li
+                        name:
+                          type: string
+                          example: "Nguyen Van A"
+                          description: Tên quan li
+                        email:
+                          type: string
+                          format: email
+                          example: "nguyen.van.a@example.com"
+                          description: Email quan li
+        '400':
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 400
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Bad Request
+        '404':
+          description: Không tìm thấy nhân viên hoặc quản lý
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 404
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Employee or manager not found
+        '500':
+          description: Lỗi máy chủ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal server error
+  /api/employees/{managerId}:
+    get:
+      summary: Lấy thông tin danh sách ID của nhân viên thông qua ID quản lí
+      description: Trả về thông tin danh sách ID của nhân viên thông qua ID quản lí
+      tags:
+        - Employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của quản lí
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Manager retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: integer
+                      format: int64
+                      example: 1
+        '400':
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 400
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Bad Request
+        '404':
+          description: Không tìm thấy nhân viên hoặc quản lý
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 404
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Employee or manager not found
+        '500':
+          description: Lỗi máy chủ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal server error
+  /api/employees/all:
+    get:
+      summary: Lấy thông tin danh sách nhân viên trừ quản lí
+      description: Trả về thông tin danh sách nhân viên trừ quản lí
+      tags:
+        - Employee
+      parameters:
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Manager retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                          example: 1
+                          description: ID của nhân viên
+                        name:
+                          type: string
+                          example: "Nguyen Van A"
+                          description: Tên nhân viên
+                        email:
+                          type: string
+                          format: email
+                          example: "nguyen.van.a@example.com"
+                          description: Email nhân viên
+        '400':
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 400
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Bad Request
+        '404':
+          description: Không tìm thấy nhân viên hoặc quản lý
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 404
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Employee or manager not found
+        '500':
+          description: Lỗi máy chủ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal server error
+
+components:
+  schemas:
+    Employee:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+          format: int64
+          example: 1
+          description: ID của nhân viên
+        employeeName:
+          type: string
+          example: "Nguyen Van A"
+          description: Tên nhân viên
+        employeeEmail:
+          type: string
+          format: email
+          example: "nguyen.van.a@example.com"
+          description: Email nhân viên
+        employeeGender:
+          type: string
+          example: "MALE"
+          description: Giới tính nhân viên
+        departmentId:
+          type: integer
+          formatYB: int64
+          example: 1
+          description: ID phòng ban
+        positionId:
+          type: integer
+          format: int64
+          example: 1
+          description: ID vị trí
+        employeeStatus:
+          type: string
+          example: "ACTIVE"
+          description: Trạng thái nhân viên
+
+    Department:
+      type: object
+      properties:
+        departmentId:
+          type: integer
+          format: int64
+          example: 1
+          description: ID phòng ban
+        departmentName:
+          type: string
+          example: "Phòng Công nghệ"
+          description: Tên phòng ban
+        departmentCode:
+          type: string
+          example: "TECH"
+          description: Mã phòng ban
+        managerId:
+          type: integer
+          format: int64
+          example: 2
+          description: ID quản lý phòng ban
+
+    Position:
+      type: object
+      properties:
+        positionId:
+          type: integer
+          format: int64
+          example: 1
+          description: ID vị trí
+        positionName:
+          type: string
+          example: "Developer"
+          description: Tên vị trí
+        positionCode:
+          type: string
+          example: "DEV"
+          description: Mã vị trí

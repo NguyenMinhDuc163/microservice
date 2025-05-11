@@ -1,0 +1,275 @@
+version: '3.8'
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    tty: true
+
+  api-gateway:
+    build: ./gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - NODE_ENV=development
+      - MANAGER_SERVICE_URL=http://manager-service:8003
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8005
+      - EMPLOYEE_SERVICE_URL=http://employee-service:8082
+      - APPROVAL_SERVICE_URL=http://approval-service:8083
+      - LEAVE_REQUEST_SERVICE_URL=http://leave_request_service:8081
+      - LEAVE_SERVICE_URL=http://leave_service:8088
+      - LOG_LEVEL=debug
+    depends_on:
+      - manager-service
+      - notification-service
+      - employee-service
+      - approval-service
+    networks:
+      - app-network
+
+
+  approval-service:
+    build: ./services/approval-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://approval-mysql:3306/approval_service_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092  # Sửa từ kafka=9092
+      - KAFKA_GROUP_ID=leave-request-group
+    depends_on:
+      - approval-mysql
+      - kafka
+    networks:
+      - app-network
+
+  employee-service:
+    build: ./services/employee-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://employee-mysql:3306/employee_service_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092  # Sửa từ kafka=9092
+      - KAFKA_GROUP_ID=leave-request-group
+    depends_on:
+      - employee-mysql
+      - kafka
+    networks:
+      - app-network
+
+  notification-service:
+    build: ./services/notification_service
+    container_name: notification-service
+    ports:
+      - "8005:8005"
+    environment:
+      - PORT=8005
+      - NODE_ENV=development
+      - POSTGRES_DB=notification_service
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Admin@123
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - APP_SECRET=tkb!afj.tch6AUF8tut
+      - EXCHANGE_NAME=LEAVE_EXCHANGE
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_GROUP_ID=notification-service-group
+    volumes:
+      - ./services/notification_service/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  manager-service:
+    build: ./services/manager_service
+    container_name: manager-service
+    ports:
+      - "8003:8003"
+    environment:
+      - PORT=8003
+      - NODE_ENV=development
+      - POSTGRES_DB=manager_service
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Admin@123
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - APP_SECRET=tkb!afj.tch6AUF8tut
+      - EXCHANGE_NAME=LEAVE_EXCHANGE
+      #      - MSG_QUEUE_URL=amqp://rabbitmq
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092  # Sửa từ kafka=9092
+      - KAFKA_GROUP_ID=leave-request-group
+    depends_on:
+      - postgres
+      #      - rabbitmq
+      - kafka
+    volumes:
+      - ./services/manager_service:/app
+      - /app/node_modules
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Admin@123
+      - POSTGRES_DB=notification_service
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    command: ["postgres", "-c", "max_connections=200"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  #  rabbitmq:
+  #    image: rabbitmq:3.11-management-alpine
+  #    container_name: rabbitmq
+  #    ports:
+  #      - "5672:5672"
+  #      - "15672:15672"
+  #    environment:
+  #      - RABBITMQ_DEFAULT_USER=guest
+  #      - RABBITMQ_DEFAULT_PASS=guest
+  #    volumes:
+  #      - rabbitmq-data:/var/lib/rabbitmq
+  #    networks:
+  #      - app-network
+
+
+  approval-mysql:
+    image: mysql:8.0
+    container_name: approval-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: approval_service_db
+    ports:
+      - "3309:3306"
+    volumes:
+      - approval-mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  employee-mysql:
+    image: mysql:8.0
+    container_name: employee-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: employee_service_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - employee-mysql-data:/var/lib/mysql
+    #      - ./scripts/init-data-employee.sh:/docker-entrypoint-initdb.d/init-data-employee.sh
+    networks:
+      - app-network
+  #######################################
+  leave-requests-service:
+    build: ./services/leave-requests-service
+    container_name: leave-requests-service
+    depends_on:
+      - leave-requests-service-mysql
+    ports:
+      - "8090:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - app-network
+  leave-service:
+    build: ./services/leave-service
+    container_name: leave-service
+    depends_on:
+      - leave-service-mysql
+    ports:
+      - "8091:8088"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - app-network
+  leave-service-mysql:
+    image: mysql:8.0
+    container_name: leave-service-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: leave_service_db
+    ports:
+      - "3311:3306"
+    volumes:
+      - leave-service-mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+  leave-requests-service-mysql:
+    image: mysql:8.0
+    container_name:   leave-requests-service-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: leave_request_service_db
+    ports:
+      - "3310:3306"
+    volumes:
+      - leave-requests-service-mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.1
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - app-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.2.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CREATE_TOPICS: "leave_topic:3:1,approval_topic:3:1,notify_topic:3:1" #topic_name:partitions:replication_factor
+    depends_on:
+      - zookeeper
+    networks:
+      - app-network
+volumes:
+  postgres-data:
+  #  rabbitmq-data:
+  leave-service-mysql-data:
+  leave-requests-service-mysql-data:
+  approval-mysql-data:
+  employee-mysql-data:
+
+networks:
+  app-network:
+    driver: bridge

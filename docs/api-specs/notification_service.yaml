@@ -1,0 +1,901 @@
+openapi: 3.0.0
+info:
+  title: Notification Service API
+  description: API for managing notifications in the leave management system
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8005
+    description: Development server
+  - url: https://api.notification.example.com
+    description: Production server
+
+paths:
+  /notifications:
+    post:
+      summary: Create a new notification
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - recipientId
+                - message
+              properties:
+                recipientId:
+                  type: string
+                  description: ID of the notification recipient
+                recipientType:
+                  type: string
+                  enum: [EMPLOYEE, MANAGER]
+                  default: EMPLOYEE
+                  description: Type of recipient
+                message:
+                  type: string
+                  description: Notification message content
+                type:
+                  type: string
+                  enum: [LEAVE_REQUEST, APPROVAL, REJECTION, REMINDER]
+                  default: LEAVE_REQUEST
+                  description: Type of notification
+                referenceId:
+                  type: string
+                  description: Reference ID for related entity (e.g., leave request ID)
+                channel:
+                  type: string
+                  enum: [EMAIL, APP, SMS]
+                  default: APP
+                  description: Notification delivery channel
+      responses:
+        '201':
+          description: Notification created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Bad request - Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    get:
+      summary: Get notifications with optional filters
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: recipientId
+          schema:
+            type: string
+          description: Filter by recipient ID
+        - in: query
+          name: recipientType
+          schema:
+            type: string
+            enum: [EMPLOYEE, MANAGER]
+          description: Filter by recipient type
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [SENT, DELIVERED, READ]
+          description: Filter by notification status
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /notifications/{id}:
+    get:
+      summary: Get a specific notification by ID
+      tags:
+        - Notifications
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    delete:
+      summary: Delete a notification
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /notifications/{id}/status:
+    put:
+      summary: Update notification status
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Notification ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [SENT, DELIVERED, READ]
+                  description: New status for the notification
+      responses:
+        '200':
+          description: Notification status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Invalid status value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /unread-notifications:
+    get:
+      summary: Get unread notifications for a recipient
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: recipientId
+          required: true
+          schema:
+            type: string
+          description: ID of the recipient
+        - in: query
+          name: recipientType
+          schema:
+            type: string
+            enum: [EMPLOYEE, MANAGER]
+            default: EMPLOYEE
+          description: Type of recipient
+      responses:
+        '200':
+          description: Unread notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Recipient ID is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /app-events:
+    post:
+      summary: Handle events from other services
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - payload
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    event:
+                      type: string
+                      enum: [LEAVE_REQUEST_CREATED, LEAVE_REQUEST_APPROVED, LEAVE_REQUEST_REJECTED]
+                    data:
+                      type: object
+                      description: Event-specific data
+      responses:
+        '200':
+          description: Event processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Invalid event type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /whoami:
+    get:
+      summary: Get service information
+      tags:
+        - Service Info
+      responses:
+        '200':
+          description: Service information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: HTTP status code
+        data:
+          oneOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/Notification'
+            - type: object
+            - type: array
+              items:
+                type: object
+        status:
+          type: boolean
+          description: Success status
+        message:
+          type: string
+          description: Response message
+        error:
+          type: string
+          description: Error message if any
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        recipientId:
+          type: string
+        recipientType:
+          type: string
+          enum: [EMPLOYEE, MANAGER]
+        message:
+          type: string
+        type:
+          type: string
+          enum: [LEAVE_REQUEST, APPROVAL, REJECTION, REMINDER]
+        referenceId:
+          type: string
+        status:
+          type: string
+          enum: [SENT, DELIVERED, READ]
+        channel:
+          type: string
+          enum: [EMAIL, APP, SMS]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    EventPayload:
+      type: object
+      properties:
+        event:
+          type: string
+          description: Event type
+        data:
+          type: object
+          description: Event data
+
+    LeaveRequestCreatedEvent:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        managerId:
+          type: string
+        requestDetails:
+          type: object
+          properties:
+            requestId:
+              type: string
+            employeeName:
+              type: string
+
+    LeaveRequestApprovedEvent:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        requestDetails:
+          type: object
+          properties:
+            requestId:
+              type: string
+
+    LeaveRequestRejectedEvent:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        requestDetails:
+          type: object
+          properties:
+            requestId:
+              type: string
+        reason:
+          type: string
+
+tags:
+  - name: Notifications
+    description: Notification management endpoints
+  - name: Events
+    description: Event handling endpoints
+  - name: Service Info
+    description: Service information endpointsopenapi: 3.0.0
+info:
+  title: Notification Service API
+  description: API for managing notifications in the leave management system
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8005
+    description: Development server
+  - url: https://api.notification.example.com
+    description: Production server
+
+paths:
+  /notifications:
+    post:
+      summary: Create a new notification
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - recipientId
+                - message
+              properties:
+                recipientId:
+                  type: string
+                  description: ID of the notification recipient
+                recipientType:
+                  type: string
+                  enum: [EMPLOYEE, MANAGER]
+                  default: EMPLOYEE
+                  description: Type of recipient
+                message:
+                  type: string
+                  description: Notification message content
+                type:
+                  type: string
+                  enum: [LEAVE_REQUEST, APPROVAL, REJECTION, REMINDER]
+                  default: LEAVE_REQUEST
+                  description: Type of notification
+                referenceId:
+                  type: string
+                  description: Reference ID for related entity (e.g., leave request ID)
+                channel:
+                  type: string
+                  enum: [EMAIL, APP, SMS]
+                  default: APP
+                  description: Notification delivery channel
+      responses:
+        '201':
+          description: Notification created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Bad request - Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    get:
+      summary: Get notifications with optional filters
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: recipientId
+          schema:
+            type: string
+          description: Filter by recipient ID
+        - in: query
+          name: recipientType
+          schema:
+            type: string
+            enum: [EMPLOYEE, MANAGER]
+          description: Filter by recipient type
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [SENT, DELIVERED, READ]
+          description: Filter by notification status
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /notifications/{id}:
+    get:
+      summary: Get a specific notification by ID
+      tags:
+        - Notifications
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    delete:
+      summary: Delete a notification
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /notifications/{id}/status:
+    put:
+      summary: Update notification status
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Notification ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [SENT, DELIVERED, READ]
+                  description: New status for the notification
+      responses:
+        '200':
+          description: Notification status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Invalid status value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /unread-notifications:
+    get:
+      summary: Get unread notifications for a recipient
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: recipientId
+          required: true
+          schema:
+            type: string
+          description: ID of the recipient
+        - in: query
+          name: recipientType
+          schema:
+            type: string
+            enum: [EMPLOYEE, MANAGER]
+            default: EMPLOYEE
+          description: Type of recipient
+      responses:
+        '200':
+          description: Unread notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Recipient ID is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /app-events:
+    post:
+      summary: Handle events from other services
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - payload
+              properties:
+                payload:
+                  type: object
+                  properties:
+                    event:
+                      type: string
+                      enum: [LEAVE_REQUEST_CREATED, LEAVE_REQUEST_APPROVED, LEAVE_REQUEST_REJECTED]
+                    data:
+                      type: object
+                      description: Event-specific data
+      responses:
+        '200':
+          description: Event processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Invalid event type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /whoami:
+    get:
+      summary: Get service information
+      tags:
+        - Service Info
+      responses:
+        '200':
+          description: Service information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: HTTP status code
+        data:
+          oneOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/Notification'
+            - type: object
+            - type: array
+              items:
+                type: object
+        status:
+          type: boolean
+          description: Success status
+        message:
+          type: string
+          description: Response message
+        error:
+          type: string
+          description: Error message if any
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        recipientId:
+          type: string
+        recipientType:
+          type: string
+          enum: [EMPLOYEE, MANAGER]
+        message:
+          type: string
+        type:
+          type: string
+          enum: [LEAVE_REQUEST, APPROVAL, REJECTION, REMINDER]
+        referenceId:
+          type: string
+        status:
+          type: string
+          enum: [SENT, DELIVERED, READ]
+        channel:
+          type: string
+          enum: [EMAIL, APP, SMS]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    EventPayload:
+      type: object
+      properties:
+        event:
+          type: string
+          description: Event type
+        data:
+          type: object
+          description: Event data
+
+    LeaveRequestCreatedEvent:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        managerId:
+          type: string
+        requestDetails:
+          type: object
+          properties:
+            requestId:
+              type: string
+            employeeName:
+              type: string
+
+    LeaveRequestApprovedEvent:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        requestDetails:
+          type: object
+          properties:
+            requestId:
+              type: string
+
+    LeaveRequestRejectedEvent:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        requestDetails:
+          type: object
+          properties:
+            requestId:
+              type: string
+        reason:
+          type: string
+
+tags:
+  - name: Notifications
+    description: Notification management endpoints
+  - name: Events
+    description: Event handling endpoints
+  - name: Service Info
+    description: Service information endpoints
